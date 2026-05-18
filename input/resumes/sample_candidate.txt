@@ -1,0 +1,12 @@
+Jane Candidate
+Location: New York, NY
+Work authorization: Authorized to work in the United States
+
+Senior Python developer with 7 years of experience building backend APIs,
+data pipelines, and SaaS products. Skilled in Python, FastAPI, SQL,
+PostgreSQL, AWS, Docker, and GitHub Actions.
+
+Experience:
+- Built REST APIs and internal recruiting workflow tools.
+- Led integrations with cloud services and analytics platforms.
+- Available within 2 weeks.

@@ -1,0 +1,4 @@
+rank,candidate_name,file_name,total_score,recommendation,Required skills match,Relevant experience,Industry/domain fit,Tools/platforms match,Seniority alignment,Location/work authorization/availability fit
+1,John Smith,candidate1.txt,100,Strong Match,30,25,15,10,10,10
+2,Sarah Johnson,candidate2.txt,85,Strong Match,20,20,15,10,10,10
+3,Michael Brown,candidate3.txt,25,Weak Match,0,5,0,0,10,10
