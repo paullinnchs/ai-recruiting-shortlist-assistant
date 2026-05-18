@@ -1,7 +1,11 @@
 from html import escape
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
 from flask import Flask, request
+from werkzeug.utils import secure_filename
 
+from parse_resumes import SUPPORTED_RESUME_EXTENSIONS, extract_resume_text, guess_candidate_name
 from score_candidates import SCORING_WEIGHTS, score_all_candidates
 
 
@@ -279,7 +283,7 @@ PAGE_TEMPLATE = """
   <main>
     <section class="intro">
       <h1>Web Demo</h1>
-      <p>Paste a job description, upload multiple `.txt` resumes, and review ranked candidate results directly on the page.</p>
+      <p>Paste a job description, upload multiple `.txt`, `.pdf`, or `.docx` resumes, and review ranked candidate results directly on the page.</p>
     </section>
 
     <div class="layout">
@@ -291,8 +295,8 @@ PAGE_TEMPLATE = """
 
         <div class="field">
           <label for="resumes">Resume Files</label>
-          <input id="resumes" name="resumes" type="file" accept=".txt" multiple required>
-          <p class="helper">This web demo supports multiple `.txt` resume uploads first. API keys stay on the server and are never sent to the browser.</p>
+          <input id="resumes" name="resumes" type="file" accept=".txt,.pdf,.docx" multiple required>
+          <p class="helper">This web demo supports multiple `.txt`, `.pdf`, and `.docx` resume uploads. API keys stay on the server and are never sent to the browser.</p>
         </div>
 
         <button type="submit">Analyze Candidates</button>
@@ -321,12 +325,12 @@ def index():
 
     if request.method == "POST":
         job_description = request.form.get("job_description", "").strip()
-        resumes, skipped_files = read_uploaded_txt_resumes(request.files.getlist("resumes"))
+        resumes, skipped_files = read_uploaded_resumes(request.files.getlist("resumes"))
 
         if not job_description:
             messages_html = '<div class="notice">Please paste a job description before analyzing candidates.</div>'
         elif not resumes:
-            messages_html = '<div class="notice">Please upload at least one non-empty `.txt` resume.</div>'
+            messages_html = '<div class="notice">Please upload at least one non-empty `.txt`, `.pdf`, or `.docx` resume.</div>'
         else:
             scored_candidates = score_all_candidates(job_description, resumes)
             results_html = render_results(scored_candidates)
@@ -345,38 +349,42 @@ def index():
 app.add_url_rule("/", "index", index, methods=["GET", "POST"])
 
 
-def read_uploaded_txt_resumes(files) -> tuple[list[dict], list[str]]:
+def read_uploaded_resumes(files) -> tuple[list[dict], list[str]]:
     resumes = []
     skipped_files = []
 
-    for uploaded_file in files:
-        file_name = uploaded_file.filename or "unnamed.txt"
-        if not file_name.lower().endswith(".txt"):
-            skipped_files.append(file_name)
-            continue
+    with TemporaryDirectory() as temp_dir:
+        temp_path = Path(temp_dir)
+        for uploaded_file in files:
+            file_name = secure_filename(uploaded_file.filename or "")
+            extension = Path(file_name).suffix.lower()
 
-        raw_text = uploaded_file.read().decode("utf-8", errors="replace").strip()
-        if not raw_text:
-            skipped_files.append(file_name)
-            continue
+            if not file_name or extension not in SUPPORTED_RESUME_EXTENSIONS:
+                skipped_files.append(uploaded_file.filename or "unnamed file")
+                continue
 
-        resumes.append(
-            {
-                "file_name": file_name,
-                "candidate_name": guess_candidate_name(raw_text, file_name),
-                "text": raw_text,
-            }
-        )
+            resume_path = temp_path / file_name
+            uploaded_file.save(resume_path)
+
+            try:
+                resume_text = extract_resume_text(resume_path).strip()
+            except Exception:
+                skipped_files.append(file_name)
+                continue
+
+            if not resume_text:
+                skipped_files.append(file_name)
+                continue
+
+            resumes.append(
+                {
+                    "file_name": file_name,
+                    "candidate_name": guess_candidate_name(resume_text, resume_path.stem),
+                    "text": resume_text,
+                }
+            )
 
     return resumes, skipped_files
-
-
-def guess_candidate_name(text: str, fallback: str) -> str:
-    for line in text.splitlines():
-        cleaned = line.strip()
-        if cleaned:
-            return cleaned[:80]
-    return fallback.rsplit(".", 1)[0].replace("_", " ").replace("-", " ").title()
 
 
 def render_results(scored_candidates: list[dict]) -> str:

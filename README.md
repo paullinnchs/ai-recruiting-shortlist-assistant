@@ -86,7 +86,7 @@ run.bat
 
 ### Web Demo
 
-The project also includes a lightweight Flask web demo for local use. It lets a user paste a job description, upload multiple `.txt` resumes at once, click **Analyze Candidates**, and view ranked candidate results in the browser.
+The project also includes a lightweight Flask web demo for local use. It lets a user paste a job description, upload multiple `.txt`, `.pdf`, or `.docx` resumes at once, click **Analyze Candidates**, and view ranked candidate results in the browser.
 
 Install dependencies:
 
@@ -106,7 +106,7 @@ Open:
 http://127.0.0.1:5000
 ```
 
-The web demo supports multiple `.txt` resume uploads first. API keys are read by the Python backend from `.env` and are not exposed in frontend code.
+The web demo supports multiple `.txt`, `.pdf`, and `.docx` resume uploads. API keys are read by the Python backend from `.env` and are not exposed in frontend code.
 
 ## Output Files
 
