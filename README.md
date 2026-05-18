@@ -1,56 +1,129 @@
 # AI Recruiting Shortlist Assistant
 
-A beginner-friendly Python MVP for locally ranking `.txt` resumes against a job description.
+A local command-line MVP that helps recruiters compare `.txt` resumes against a job description and produce a ranked shortlist, candidate report, and outreach message drafts.
 
 Recruiter-assist disclaimer: This tool is an aid for organizing and summarizing candidate information. It should not be the sole basis for employment decisions. Review outputs for accuracy, bias, legal compliance, and job-relatedness before using them.
 
-## What It Does
+## Project Overview
 
-1. Reads `input/job_description.txt`
-2. Reads `.txt` resumes from `input/resumes/`
-3. Scores each resume using this 100-point model:
-   - Required skills match: 30
-   - Relevant experience: 25
-   - Industry/domain fit: 15
-   - Tools/platforms match: 10
-   - Seniority alignment: 10
-   - Location/work authorization/availability fit: 10
-4. Writes:
-   - `output/ranked_shortlist.csv`
-   - `output/candidate_report.md`
-   - `output/outreach_messages.md`
+AI Recruiting Shortlist Assistant reads a job description from `input/job_description.txt`, scans resumes from `input/resumes/`, scores each candidate against a defined rubric, and writes recruiter-ready outputs to the `output/` folder.
 
-## Setup
+The MVP supports `.txt` resumes first. If `OPENAI_API_KEY` is available in `.env`, the app uses OpenAI-assisted scoring. If no API key is present, it falls back to simple local keyword-based scoring so the workflow remains easy to test.
+
+## Features
+
+- Local command-line workflow with no web app required.
+- `.txt` resume parsing from `input/resumes/`.
+- Job description parsing from `input/job_description.txt`.
+- 100-point scoring rubric:
+  - Required skills match: 30
+  - Relevant experience: 25
+  - Industry/domain fit: 15
+  - Tools/platforms match: 10
+  - Seniority alignment: 10
+  - Location/work authorization/availability fit: 10
+- Recommendation tiers:
+  - 80-100: Strong Match
+  - 60-79: Possible Match
+  - 0-59: Weak Match
+- Demo-ready CSV and Markdown outputs.
+- Recruiter notes, submission summaries, and draft outreach messages.
+- `sample_candidate.txt` is ignored if present, so demo data does not pollute live scoring.
+
+## Installation
+
+Install dependencies with `uv`:
 
 ```bat
-python -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
+uv venv
+uv pip install -r requirements.txt
+```
+
+Create your local environment file:
+
+```bat
 copy .env.example .env
 ```
 
-Edit `.env` and add your `OPENAI_API_KEY`.
+Edit `.env` and add your API key:
 
-The app can run without an API key. If no key is found, it uses a simple local keyword-based scoring fallback. The `openai` package is only needed when you want AI-assisted scoring.
+```text
+OPENAI_API_KEY=your_openai_api_key_here
+OPENAI_MODEL=gpt-4o-mini
+```
+
+The OpenAI package is only required for AI-assisted scoring. The app can still run without an API key using the built-in heuristic fallback.
 
 ## Usage
 
-1. Paste the job description into `input/job_description.txt`.
-2. Add one or more `.txt` resumes to `input/resumes/`.
-3. Run:
+1. Paste the job description into:
+
+```text
+input/job_description.txt
+```
+
+2. Add candidate resumes as `.txt` files:
+
+```text
+input/resumes/candidate1.txt
+input/resumes/candidate2.txt
+input/resumes/candidate3.txt
+```
+
+3. Run the assistant:
+
+```bat
+uv run python src/main.py
+```
+
+You can also use:
 
 ```bat
 run.bat
 ```
 
-Or:
+## Output Files
 
-```bat
-python src\main.py
+The app regenerates these files on each run:
+
+```text
+output/ranked_shortlist.csv
+output/candidate_report.md
+output/outreach_messages.md
+```
+
+### `ranked_shortlist.csv`
+
+A spreadsheet-friendly ranked shortlist with candidate name, resume file, total score, match tier, submission summary, recruiter notes, and category-level scores.
+
+### `candidate_report.md`
+
+A recruiter-facing Markdown report with an overall submission summary, ranked shortlist table, candidate score breakdowns, strengths, gaps, and follow-up notes.
+
+### `outreach_messages.md`
+
+Draft outreach content for candidates who are worth contacting. Weak matches are clearly marked with no outreach recommended for the current role.
+
+## Project Structure
+
+```text
+input/
+  job_description.txt
+  resumes/
+output/
+src/
+  main.py
+  parse_resumes.py
+  score_candidates.py
+  generate_outputs.py
+  prompts.py
+requirements.txt
+.env.example
+run.bat
 ```
 
 ## Notes
 
-- `.txt` resumes are supported first for this MVP.
-- PDF and DOCX parsing are intentionally not included yet.
-- The outputs are recruiter-assist drafts and should be reviewed before use.
+- This is an MVP intended for local recruiter-assist workflows.
+- PDF and DOCX resume parsing are not included yet.
+- Outputs should be reviewed before being shared with candidates or hiring teams.

@@ -1,12 +1,32 @@
-# Candidate Report
+# AI Recruiting Shortlist Assistant - Candidate Report
 
 Recruiter-assist disclaimer: This tool is an aid for organizing and summarizing candidate information. It should not be the sole basis for employment decisions. Review outputs for accuracy, bias, legal compliance, and job-relatedness before using them.
 
-## 1. John Smith - 100/100
+## Submission Summary
 
-**Recommendation:** Strong Match
+Reviewed 3 candidate resume(s). Results: 2 Strong Match, 0 Possible Match, and 1 Weak Match.
 
-### Score Breakdown
+## Ranked Shortlist
+
+| Rank | Candidate | Score | Match Tier | Submission Summary |
+| --- | --- | ---: | --- | --- |
+| 1 | John Smith | 100/100 | Strong Match | Prioritize for recruiter screen and hiring-manager review. |
+| 2 | Sarah Johnson | 80/100 | Strong Match | Prioritize for recruiter screen and hiring-manager review. |
+| 3 | Michael Brown | 25/100 | Weak Match | Do not prioritize for this role based on the current resume. |
+
+## Candidate Details
+
+### 1. John Smith
+
+**Match Tier:** Strong Match
+
+**Total Score:** 100/100
+
+**Submission Summary:** Prioritize for recruiter screen and hiring-manager review.
+
+**Recruiter Notes:** Strong alignment. Highlight: 7 years of experience in Customer Success and Account Management
+
+**Score Breakdown**
 
 - Required skills match: 30/30
 - Relevant experience: 25/25
@@ -15,48 +35,62 @@ Recruiter-assist disclaimer: This tool is an aid for organizing and summarizing 
 - Seniority alignment: 10/10
 - Location/work authorization/availability fit: 10/10
 
-### Strengths
+**Strengths**
 
 - 7 years of experience in Customer Success and Account Management
-- Proven track record with $2M ARR and 108% net revenue retention
-- Experience conducting QBRs and managing onboarding and implementation
-- Familiarity with Salesforce and HubSpot
+- Strong experience with SaaS platforms
+- Conducted quarterly business reviews (QBRs)
+- Proven stakeholder management skills
+- Experience with Salesforce and HubSpot
+- Experience in onboarding and implementation
+- Background in HR technology
 
-### Gaps
+**Gaps / Follow-Up Questions**
 
 - None noted.
 
-## 2. Sarah Johnson - 85/100
+### 2. Sarah Johnson
 
-**Recommendation:** Strong Match
+**Match Tier:** Strong Match
 
-### Score Breakdown
+**Total Score:** 80/100
+
+**Submission Summary:** Prioritize for recruiter screen and hiring-manager review.
+
+**Recruiter Notes:** Strong alignment. Highlight: 10 years of experience in HR technology
+
+**Score Breakdown**
 
 - Required skills match: 20/30
-- Relevant experience: 20/25
+- Relevant experience: 15/25
 - Industry/domain fit: 15/15
 - Tools/platforms match: 10/10
 - Seniority alignment: 10/10
 - Location/work authorization/availability fit: 10/10
 
-### Strengths
+**Strengths**
 
-- 10 years of experience in staffing and HR technology
-- Strong knowledge of HR Tech industry
-- Experience with Salesforce and HubSpot
+- 10 years of experience in HR technology
+- Strong knowledge of Salesforce and HubSpot
+- Experience managing client relationships
 
-### Gaps
+**Gaps / Follow-Up Questions**
 
-- Limited direct customer success experience
-- No mention of conducting QBRs
-- Lack of experience in identifying expansion opportunities
-- No experience with onboarding and implementation
+- Limited direct experience in Customer Success or Account Management
+- No specific experience conducting QBRs
+- Lacks direct experience with onboarding and implementation
 
-## 3. Michael Brown - 25/100
+### 3. Michael Brown
 
-**Recommendation:** Weak Match
+**Match Tier:** Weak Match
 
-### Score Breakdown
+**Total Score:** 25/100
+
+**Submission Summary:** Do not prioritize for this role based on the current resume.
+
+**Recruiter Notes:** Low alignment for this opening. Main concern: No experience in Customer Success or Account Management
+
+**Score Breakdown**
 
 - Required skills match: 0/30
 - Relevant experience: 5/25
@@ -65,12 +99,12 @@ Recruiter-assist disclaimer: This tool is an aid for organizing and summarizing 
 - Seniority alignment: 10/10
 - Location/work authorization/availability fit: 10/10
 
-### Strengths
+**Strengths**
 
 - Strong leadership experience
-- Extensive customer service background
+- High customer satisfaction improvement
 
-### Gaps
+**Gaps / Follow-Up Questions**
 
 - No experience in Customer Success or Account Management
 - No experience with SaaS platforms
@@ -79,5 +113,5 @@ Recruiter-assist disclaimer: This tool is an aid for organizing and summarizing 
 - No experience with CRM systems like Salesforce or HubSpot
 - No experience identifying expansion opportunities
 - No onboarding or implementation experience
-- No relevant industry experience in HR Tech or Recruiting
+- No HR Tech or Recruiting industry experience
 - No experience with AI or workflow automation
