@@ -104,9 +104,42 @@ A recruiter-facing Markdown report with an overall submission summary, ranked sh
 
 Draft outreach content for candidates who are worth contacting. Weak matches are clearly marked with no outreach recommended for the current role.
 
+## Demo Scenario
+
+The `demo/` folder contains a ready-to-run sample scenario for an Enterprise Customer Success Manager role at a B2B SaaS platform serving HR and recruiting teams.
+
+Demo files:
+
+```text
+demo/
+  job_description.txt
+  sample_resumes/
+    candidate1.txt
+    candidate2.txt
+    candidate3.txt
+  sample_outputs/
+    ranked_shortlist.csv
+    candidate_report.md
+    outreach_messages.md
+```
+
+To run the demo, copy the sample job description and resumes into the live input folder, then run the assistant:
+
+```powershell
+Copy-Item demo\job_description.txt input\job_description.txt -Force
+Copy-Item demo\sample_resumes\*.txt input\resumes\ -Force
+uv run python src/main.py
+```
+
+After the run, compare the regenerated files in `output/` with the reference files in `demo/sample_outputs/`.
+
 ## Project Structure
 
 ```text
+demo/
+  job_description.txt
+  sample_resumes/
+  sample_outputs/
 input/
   job_description.txt
   resumes/
