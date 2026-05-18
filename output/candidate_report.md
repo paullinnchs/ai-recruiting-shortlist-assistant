@@ -40,10 +40,9 @@ Reviewed 3 candidate resume(s). Results: 2 Strong Match, 0 Possible Match, and 1
 - 7 years of experience in Customer Success and Account Management
 - Strong experience with SaaS platforms
 - Conducted quarterly business reviews (QBRs)
-- Proven stakeholder management skills
+- Proficient in stakeholder management
 - Experience with Salesforce and HubSpot
-- Experience in onboarding and implementation
-- Background in HR technology
+- Identified expansion opportunities and managed onboarding and implementation
 
 **Gaps / Follow-Up Questions**
 
@@ -57,7 +56,7 @@ Reviewed 3 candidate resume(s). Results: 2 Strong Match, 0 Possible Match, and 1
 
 **Submission Summary:** Prioritize for recruiter screen and hiring-manager review.
 
-**Recruiter Notes:** Strong alignment. Highlight: 10 years of experience in HR technology
+**Recruiter Notes:** Strong alignment. Highlight: 10 years of experience in staffing and HR technology
 
 **Score Breakdown**
 
@@ -70,15 +69,16 @@ Reviewed 3 candidate resume(s). Results: 2 Strong Match, 0 Possible Match, and 1
 
 **Strengths**
 
-- 10 years of experience in HR technology
-- Strong knowledge of Salesforce and HubSpot
-- Experience managing client relationships
+- 10 years of experience in staffing and HR technology
+- Strong knowledge of HR Tech industry
+- Experience with Salesforce and HubSpot
 
 **Gaps / Follow-Up Questions**
 
-- Limited direct experience in Customer Success or Account Management
-- No specific experience conducting QBRs
-- Lacks direct experience with onboarding and implementation
+- Limited direct customer success experience
+- No mention of conducting QBRs
+- Lacks experience in identifying expansion opportunities
+- No experience with onboarding and implementation
 
 ### 3. Michael Brown
 
@@ -102,16 +102,15 @@ Reviewed 3 candidate resume(s). Results: 2 Strong Match, 0 Possible Match, and 1
 **Strengths**
 
 - Strong leadership experience
-- High customer satisfaction improvement
+- High customer satisfaction focus
+- Significant years of experience in management
 
 **Gaps / Follow-Up Questions**
 
 - No experience in Customer Success or Account Management
-- No experience with SaaS platforms
-- Lacks experience conducting QBRs
-- No stakeholder management experience
+- Lack of experience with SaaS platforms
+- No experience conducting QBRs
 - No experience with CRM systems like Salesforce or HubSpot
+- No experience in HR Tech or Recruiting industry
+- No experience with onboarding and implementation
 - No experience identifying expansion opportunities
-- No onboarding or implementation experience
-- No HR Tech or Recruiting industry experience
-- No experience with AI or workflow automation

@@ -1,6 +1,6 @@
 # AI Recruiting Shortlist Assistant
 
-A local command-line MVP that helps recruiters compare `.txt` resumes against a job description and produce a ranked shortlist, candidate report, and outreach message drafts.
+A local command-line MVP that helps recruiters compare `.txt`, `.pdf`, and `.docx` resumes against a job description and produce a ranked shortlist, candidate report, and outreach message drafts.
 
 Recruiter-assist disclaimer: This tool is an aid for organizing and summarizing candidate information. It should not be the sole basis for employment decisions. Review outputs for accuracy, bias, legal compliance, and job-relatedness before using them.
 
@@ -8,12 +8,12 @@ Recruiter-assist disclaimer: This tool is an aid for organizing and summarizing 
 
 AI Recruiting Shortlist Assistant reads a job description from `input/job_description.txt`, scans resumes from `input/resumes/`, scores each candidate against a defined rubric, and writes recruiter-ready outputs to the `output/` folder.
 
-The MVP supports `.txt` resumes first. If `OPENAI_API_KEY` is available in `.env`, the app uses OpenAI-assisted scoring. If no API key is present, it falls back to simple local keyword-based scoring so the workflow remains easy to test.
+The MVP supports `.txt`, `.pdf`, and `.docx` resumes. If `OPENAI_API_KEY` is available in `.env`, the app uses OpenAI-assisted scoring. If no API key is present, it falls back to simple local keyword-based scoring so the workflow remains easy to test.
 
 ## Features
 
 - Local command-line workflow with no web app required.
-- `.txt` resume parsing from `input/resumes/`.
+- `.txt`, `.pdf`, and `.docx` resume parsing from `input/resumes/`.
 - Job description parsing from `input/job_description.txt`.
 - 100-point scoring rubric:
   - Required skills match: 30
@@ -62,12 +62,12 @@ The OpenAI package is only required for AI-assisted scoring. The app can still r
 input/job_description.txt
 ```
 
-2. Add candidate resumes as `.txt` files:
+2. Add candidate resumes as `.txt`, `.pdf`, or `.docx` files:
 
 ```text
 input/resumes/candidate1.txt
-input/resumes/candidate2.txt
-input/resumes/candidate3.txt
+input/resumes/candidate2.pdf
+input/resumes/candidate3.docx
 ```
 
 3. Run the assistant:
@@ -125,5 +125,6 @@ run.bat
 ## Notes
 
 - This is an MVP intended for local recruiter-assist workflows.
-- PDF and DOCX resume parsing are not included yet.
+- PDF parsing uses `pypdf`; DOCX parsing uses `python-docx`.
+- Scanned image PDFs may not produce useful text unless OCR is added later.
 - Outputs should be reviewed before being shared with candidates or hiring teams.

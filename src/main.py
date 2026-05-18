@@ -1,5 +1,5 @@
 from generate_outputs import write_outputs
-from parse_resumes import read_job_description, read_txt_resumes
+from parse_resumes import read_job_description, read_resumes
 from score_candidates import score_all_candidates
 
 
@@ -8,10 +8,10 @@ def main() -> None:
     print("Reading job description and resumes...")
 
     job_description = read_job_description()
-    resumes = read_txt_resumes()
+    resumes = read_resumes()
 
     if not resumes:
-        print("No .txt resumes found in input/resumes/. Outputs will note that no candidates were scored.")
+        print("No supported resumes found in input/resumes/. Add .txt, .pdf, or .docx files.")
         write_outputs([])
         return
 
