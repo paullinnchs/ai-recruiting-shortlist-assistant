@@ -56,6 +56,13 @@
       font-size: 14px;
     }
 
+    .nav-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 14px;
+    }
+
     .hero {
       max-width: 1120px;
       margin: 0 auto;
@@ -236,6 +243,34 @@
       font-weight: 700;
     }
 
+    .button.secondary {
+      background: #ffffff;
+      color: var(--accent-dark);
+      border: 1px solid #b9d7d2;
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 22px;
+    }
+
+    .command-block {
+      margin: 18px 0 0;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfd;
+      color: var(--text);
+      overflow-x: auto;
+    }
+
+    code {
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 14px;
+    }
+
     footer {
       max-width: 1120px;
       margin: 0 auto;
@@ -275,7 +310,11 @@
   <header>
     <nav class="nav" aria-label="Main navigation">
       <div class="brand">AI Recruiting Shortlist Assistant</div>
-      <a class="nav-link" href="DEMO_WALKTHROUGH.md">Demo Walkthrough</a>
+      <div class="nav-actions">
+        <a class="nav-link" href="http://127.0.0.1:5000">View Demo</a>
+        <a class="nav-link" href="https://github.com/paullinnchs/ai-recruiting-shortlist-assistant">View GitHub Repository</a>
+        <a class="nav-link" href="#run-locally">Run Locally Instructions</a>
+      </div>
     </nav>
   </header>
 
@@ -290,6 +329,11 @@
       <p class="note">
         Built as a recruiter-assist workflow. Final screening and hiring decisions should remain with qualified human reviewers.
       </p>
+      <div class="button-row">
+        <a class="button" href="http://127.0.0.1:5000">View Demo</a>
+        <a class="button secondary" href="https://github.com/paullinnchs/ai-recruiting-shortlist-assistant">View GitHub Repository</a>
+        <a class="button secondary" href="#run-locally">Run Locally Instructions</a>
+      </div>
     </div>
 
     <aside class="hero-panel" aria-label="Sample ranking preview">
@@ -366,6 +410,16 @@
         </article>
       </div>
     </section>
+
+    <section id="run-locally">
+      <h2>Run Locally Instructions</h2>
+      <p class="section-intro">
+        Install dependencies, start the Flask demo, then open the local web interface.
+      </p>
+      <div class="command-block">
+        <code>uv venv<br>uv pip install -r requirements.txt<br>uv run python src/web_app.py<br>Open http://127.0.0.1:5000</code>
+      </div>
+    </section>
   </main>
 
   <section class="cta">
@@ -375,8 +429,12 @@
         <p>
           Use the included demo scenario to show how a recruiting team can move from raw resumes to a structured shortlist.
         </p>
+        <div class="button-row">
+          <a class="button" href="http://127.0.0.1:5000">View Demo</a>
+          <a class="button secondary" href="https://github.com/paullinnchs/ai-recruiting-shortlist-assistant">View GitHub Repository</a>
+          <a class="button secondary" href="#run-locally">Run Locally Instructions</a>
+        </div>
       </div>
-      <a class="button" href="README.md">View Setup Instructions</a>
     </div>
   </section>
 
