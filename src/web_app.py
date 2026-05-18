@@ -296,7 +296,7 @@ PAGE_TEMPLATE = """
         <div class="field">
           <label for="resumes">Resume Files</label>
           <input id="resumes" name="resumes" type="file" accept=".txt,.pdf,.docx" multiple required>
-          <p class="helper">This web demo supports multiple `.txt`, `.pdf`, and `.docx` resume uploads. API keys stay on the server and are never sent to the browser.</p>
+          <p class="helper">This web demo supports multiple .txt, .pdf, and .docx resume uploads. API keys stay on the server and are never sent to the browser.</p>
         </div>
 
         <button type="submit">Analyze Candidates</button>

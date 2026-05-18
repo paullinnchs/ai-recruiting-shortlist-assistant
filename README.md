@@ -106,7 +106,7 @@ Open:
 http://127.0.0.1:5000
 ```
 
-The web demo supports multiple `.txt`, `.pdf`, and `.docx` resume uploads. API keys are read by the Python backend from `.env` and are not exposed in frontend code.
+This web demo supports multiple .txt, .pdf, and .docx resume uploads. API keys stay on the server and are never sent to the browser.
 
 ## Output Files
 
