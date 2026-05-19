@@ -1,6 +1,6 @@
 # AI Recruiting Shortlist Assistant
 
-A local command-line MVP that helps recruiters compare `.txt`, `.pdf`, and `.docx` resumes against a job description and produce a ranked shortlist, candidate report, and outreach message drafts.
+A local recruiter-assist MVP that helps compare .txt, .pdf and .docx resumes against a job description and produce a ranked shortlist, candidate report and outreach message drafts. It can be run from the command line or through a lightweight Flask web demo. that helps recruiters compare `.txt`, `.pdf`, and `.docx` resumes against a job description and produce a ranked shortlist, candidate report and outreach message drafts.
 
 Recruiter-assist disclaimer: This tool is an aid for organizing and summarizing candidate information. It should not be the sole basis for employment decisions. Review outputs for accuracy, bias, legal compliance, and job-relatedness before using them.
 
