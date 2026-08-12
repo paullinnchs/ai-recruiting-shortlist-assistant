@@ -1,0 +1,27 @@
+Senior Revenue Operations Analyst
+
+We are seeking a Senior Revenue Operations Analyst to support our go-to-market
+teams at a B2B SaaS company serving healthcare providers. Reporting to the
+Director of Revenue Operations, you will own pipeline reporting and forecasting
+accuracy across sales and customer success.
+
+Responsibilities:
+- Build and maintain pipeline and forecast reporting in Salesforce
+- Manage territory and quota planning cycles each quarter
+- Analyze funnel conversion and deliver monthly insights to leadership
+- Partner with Marketing on lead routing and attribution
+- Maintain data hygiene standards across Salesforce and HubSpot
+
+Requirements:
+- 5+ years in Revenue Operations, Sales Operations, or Business Analytics
+- Advanced Salesforce reporting experience, including custom report types
+- Strong SQL skills for querying warehouse data
+- Experience with a BI tool such as Tableau or Looker
+- Bachelor's degree in Business, Finance, Economics, or equivalent experience
+- Authorized to work in the United States without sponsorship
+- Hybrid schedule, three days per week onsite in Austin, TX
+
+Preferred:
+- Healthcare or life sciences industry experience
+- Experience with Snowflake
+- Salesforce Administrator certification

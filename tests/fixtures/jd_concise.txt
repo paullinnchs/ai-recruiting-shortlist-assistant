@@ -1,0 +1,10 @@
+Senior Backend Engineer
+
+Requirements:
+- 5+ years building production backend services in Python
+- Strong PostgreSQL and SQL experience
+- Experience deploying and operating services on AWS
+- Experience designing REST APIs consumed by external clients
+
+Preferred:
+- Docker and Kubernetes

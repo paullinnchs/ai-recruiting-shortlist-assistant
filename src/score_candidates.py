@@ -1,8 +1,8 @@
-import json
-import os
 import re
 from collections import Counter
 
+import llm
+from llm import load_env_file  # re-exported: this helper used to live in this module
 from prompts import SCORING_SYSTEM_PROMPT, SCORING_USER_PROMPT
 
 
@@ -133,15 +133,14 @@ LOCATION_TERMS = {
 }
 
 
-def score_all_candidates(job_description: str, resumes: list[dict]) -> list[dict]:
-    load_env_file()
-    use_openai = bool(os.getenv("OPENAI_API_KEY"))
+def score_all_candidates(job_description: str, resumes: list[dict], run_log=None) -> list[dict]:
+    use_openai = llm.is_available()
 
     scored = []
     for resume in resumes:
         if use_openai:
             try:
-                result = score_with_openai(job_description, resume)
+                result = score_with_openai(job_description, resume, run_log=run_log)
             except Exception as exc:
                 result = score_with_heuristics(job_description, resume)
                 result["notes"] = f"OpenAI scoring failed; used local heuristic. Error: {exc}"
@@ -155,26 +154,16 @@ def score_all_candidates(job_description: str, resumes: list[dict]) -> list[dict
     return sorted(scored, key=lambda item: item["total_score"], reverse=True)
 
 
-def score_with_openai(job_description: str, resume: dict) -> dict:
-    from openai import OpenAI
-
-    client = OpenAI()
-    response = client.chat.completions.create(
-        model=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
-        messages=[
-            {"role": "system", "content": SCORING_SYSTEM_PROMPT},
-            {
-                "role": "user",
-                "content": SCORING_USER_PROMPT.format(
-                    job_description=job_description,
-                    resume_text=resume["text"],
-                ),
-            },
-        ],
-        response_format={"type": "json_object"},
-        temperature=0.2,
+def score_with_openai(job_description: str, resume: dict, run_log=None) -> dict:
+    data = llm.complete_json(
+        SCORING_SYSTEM_PROMPT,
+        SCORING_USER_PROMPT.format(
+            job_description=job_description,
+            resume_text=resume["text"],
+        ),
+        purpose="candidate_scoring",
+        run_log=run_log,
     )
-    data = json.loads(response.choices[0].message.content)
     return normalize_score(data, resume["candidate_name"])
 
 
@@ -373,16 +362,3 @@ def ensure_list(value) -> list[str]:
     if isinstance(value, str) and value.strip():
         return [value.strip()]
     return []
-
-
-def load_env_file(path: str = ".env") -> None:
-    if not os.path.exists(path):
-        return
-
-    with open(path, "r", encoding="utf-8") as env_file:
-        for line in env_file:
-            stripped = line.strip()
-            if not stripped or stripped.startswith("#") or "=" not in stripped:
-                continue
-            key, value = stripped.split("=", 1)
-            os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
