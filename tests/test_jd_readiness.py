@@ -1,6 +1,5 @@
 """JD readiness gate — Design spec sections 8 (Step 1), 13, 14, and 16 (Tests 1-2)."""
 
-import llm
 import pytest
 from jd_readiness import check_readiness, check_readiness_deterministic, format_readiness_report
 from schemas import EvaluationPath, ReadinessStatus
@@ -67,9 +66,11 @@ def test_specific_jd_is_not_accused_of_boilerplate(jd_strong):
     assert not any("generic candidate language" in item.lower() for item in result.ambiguous)
 
 
-def test_long_vague_jd_missing_experience_expectation(jd_long_vague):
+def test_long_vague_jd_flags_missing_experience_expectation(jd_long_vague):
+    """Experience level is conditional: flagged and asked about, never blocking alone."""
     result = check_readiness_deterministic(jd_long_vague)
-    assert any("experience" in item.lower() for item in result.missing_critical)
+    assert any("experience" in item.lower() for item in result.ambiguous)
+    assert not any("experience" in item.lower() for item in result.missing_critical)
 
 
 # --- Test Category 4: very weak / generic -> INSUFFICIENT ---------------------
@@ -78,7 +79,7 @@ def test_long_vague_jd_missing_experience_expectation(jd_long_vague):
 def test_generic_jd_is_insufficient(jd_generic):
     result = check_readiness_deterministic(jd_generic)
     assert result.status is ReadinessStatus.INSUFFICIENT
-    assert len(result.missing_critical) >= 2
+    assert any("no specific required qualifications" in item.lower() for item in result.missing_critical)
 
 
 def test_empty_jd_is_insufficient_without_calling_the_llm(fake_llm):
@@ -132,13 +133,64 @@ def test_sufficient_jd_reports_unaddressed_areas_without_blocking(jd_concise):
 
 def test_ambiguous_conditional_category_is_flagged(jd_concise):
     """Gesturing at certifications without naming one is ambiguous, not missing."""
-    vague_cert = jd_concise + "\n- Relevant certifications required\n"
+    vague_cert = jd_concise + "\n- Relevant certifications are a plus\n"
     result = check_readiness_deterministic(vague_cert)
     assert any("certification" in item.lower() for item in result.ambiguous), result.ambiguous
     assert result.status is ReadinessStatus.SUFFICIENT, "an ambiguous extra must not block on its own"
 
 
-# --- Test Category 6: LLM unavailable -> deterministic fallback ---------------
+def test_conditional_category_blocks_when_required_but_unspecified(jd_concise):
+    """The JD says a certification is required but never says which one."""
+    result = check_readiness_deterministic(jd_concise + "\n- Relevant certifications required\n")
+    assert result.status is ReadinessStatus.INSUFFICIENT
+    assert any("certification" in item.lower() for item in result.missing_critical)
+    assert any("certification" in question.lower() for question in result.clarification_questions)
+
+
+# --- Deterministic readiness rule: regression cases -----------------------------
+
+
+def _without_lines(text, *fragments):
+    return "\n".join(line for line in text.splitlines() if not any(f in line for f in fragments))
+
+
+def test_demo_jd_is_sufficient_through_the_gate(jd_demo):
+    result = check_readiness(jd_demo)
+    assert result.status is ReadinessStatus.SUFFICIENT, result.missing_critical
+
+
+def test_jd_without_education_is_still_sufficient(jd_demo, jd_strong):
+    assert "degree" not in jd_demo.lower() and "bachelor" not in jd_demo.lower()
+    assert check_readiness(jd_demo).status is ReadinessStatus.SUFFICIENT
+    no_degree = _without_lines(jd_strong, "Bachelor")
+    assert check_readiness(no_degree).status is ReadinessStatus.SUFFICIENT
+
+
+def test_demo_jd_without_named_tools_is_still_sufficient(jd_demo):
+    no_tools = _without_lines(jd_demo, "CRM", "SaaS platforms", "AI or workflow")
+    assert "salesforce" not in no_tools.lower()
+    result = check_readiness(no_tools)
+    assert result.status is ReadinessStatus.SUFFICIENT, result.missing_critical
+
+
+def test_jd_with_only_soft_traits_is_insufficient():
+    soft = (
+        "Account Executive\n\nRequirements:\n- Great communicator\n- Team player\n"
+        "- Results-oriented\n- Positive attitude and strong work ethic\n"
+    )
+    result = check_readiness(soft)
+    assert result.status is ReadinessStatus.INSUFFICIENT
+    assert result.clarification_questions
+
+
+def test_jd_with_no_meaningful_criteria_is_insufficient(jd_generic):
+    for job_description in (jd_generic, "Operations Manager\n"):
+        result = check_readiness(job_description)
+        assert result.status is ReadinessStatus.INSUFFICIENT
+        assert result.clarification_questions
+
+
+# --- Test Category 6: readiness never depends on an LLM ----------------------
 
 
 def test_no_api_key_uses_deterministic_path(jd_strong, no_llm):
@@ -148,117 +200,22 @@ def test_no_api_key_uses_deterministic_path(jd_strong, no_llm):
     assert "deterministic" in result.notes.lower()
 
 
-def test_llm_failure_falls_back_and_still_gates(jd_long_vague, fake_llm):
-    fake_llm(raises=llm.LLMCallFailed("connection reset by peer"))
-    result = check_readiness(jd_long_vague)
-    assert result.path is EvaluationPath.FALLBACK
-    assert result.status is ReadinessStatus.INSUFFICIENT
-    assert result.clarification_questions
-    assert "connection reset by peer" in result.notes
+def test_readiness_ignores_an_available_llm(jd_demo, jd_generic, fake_llm):
+    """Same decision with or without an LLM configured, and no LLM call is made."""
+    calls = fake_llm(payload={"status": "SUFFICIENT"})
+    assert check_readiness(jd_generic, use_llm=True).status is ReadinessStatus.INSUFFICIENT
+    fake_llm(payload={"status": "INSUFFICIENT", "missing_critical": ["Everything"]})
+    assert check_readiness(jd_demo, use_llm=True).status is ReadinessStatus.SUFFICIENT
+    assert calls == []
 
 
-def test_llm_failure_does_not_wave_a_weak_jd_through(jd_generic, fake_llm):
-    """A broken LLM must never become a permissive gate."""
-    fake_llm(raises=llm.LLMUnavailable("no key"))
-    result = check_readiness(jd_generic)
-    assert result.status is ReadinessStatus.INSUFFICIENT
-
-
-def test_llm_failure_is_logged(jd_generic, fake_llm, tmp_path):
+def test_readiness_check_is_logged(jd_generic, tmp_path):
     import run_log
 
-    fake_llm(raises=llm.LLMCallFailed("boom"))
     log = run_log.start_run(output_dir=str(tmp_path))
     check_readiness(jd_generic, run_log=log)
-    events = [record["event"] for record in log.records()]
-    assert "jd_readiness_llm_failed" in events
-    assert "jd_readiness_checked" in events
-
-
-# --- LLM path: parsing and guardrails ----------------------------------------
-
-
-def test_llm_sufficient_result_is_used(jd_strong, fake_llm):
-    fake_llm(
-        payload={
-            "status": "SUFFICIENT",
-            "missing_critical": [],
-            "ambiguous": [],
-            "clarification_questions": [],
-            "recommended_next_action": "Proceed.",
-            "notes": "Criteria are specific.",
-        }
-    )
-    result = check_readiness(jd_strong)
-    assert result.status is ReadinessStatus.SUFFICIENT
-    assert result.path is EvaluationPath.LLM
-    assert result.recommended_next_action == "Proceed."
-
-
-def test_llm_insufficient_result_is_used(jd_long_vague, fake_llm):
-    fake_llm(
-        payload={
-            "status": "INSUFFICIENT",
-            "missing_critical": ["No required skills stated."],
-            "ambiguous": ["Traits rather than qualifications."],
-            "clarification_questions": ["Which skills are required?"],
-            "recommended_next_action": "Ask the hiring manager.",
-            "notes": "",
-        }
-    )
-    result = check_readiness(jd_long_vague)
-    assert result.status is ReadinessStatus.INSUFFICIENT
-    assert result.missing_critical == ["No required skills stated."]
-    assert result.clarification_questions == ["Which skills are required?"]
-
-
-def test_contradictory_llm_result_is_downgraded(jd_long_vague, fake_llm):
-    """SUFFICIENT while also naming missing critical criteria resolves to a human."""
-    fake_llm(
-        payload={
-            "status": "SUFFICIENT",
-            "missing_critical": ["Minimum experience is not stated."],
-            "clarification_questions": [],
-        }
-    )
-    result = check_readiness(jd_long_vague)
-    assert result.status is ReadinessStatus.INSUFFICIENT
-    assert result.clarification_questions
-    assert "downgraded" in result.notes.lower()
-
-
-def test_insufficient_without_questions_gets_questions(jd_long_vague, fake_llm):
-    fake_llm(payload={"status": "INSUFFICIENT", "missing_critical": ["Experience unclear."]})
-    result = check_readiness(jd_long_vague)
-    assert result.clarification_questions
-
-
-def test_unrecognized_status_is_treated_as_insufficient(jd_strong, fake_llm):
-    fake_llm(payload={"status": "probably fine", "clarification_questions": ["What is required?"]})
-    result = check_readiness(jd_strong)
-    assert result.status is ReadinessStatus.INSUFFICIENT
-
-
-def test_malformed_llm_lists_are_coerced(jd_strong, fake_llm):
-    fake_llm(
-        payload={
-            "status": "INSUFFICIENT",
-            "missing_critical": "Experience is not stated.",
-            "ambiguous": None,
-            "clarification_questions": "How many years?",
-        }
-    )
-    result = check_readiness(jd_strong)
-    assert result.missing_critical == ["Experience is not stated."]
-    assert result.ambiguous == []
-    assert result.clarification_questions == ["How many years?"]
-
-
-def test_llm_receives_the_job_description(jd_strong, fake_llm):
-    calls = fake_llm(payload={"status": "SUFFICIENT"})
-    check_readiness(jd_strong)
-    assert "Senior Revenue Operations Analyst" in calls[0]["user"]
-    assert calls[0]["purpose"] == "jd_readiness"
+    checked = [record for record in log.records() if record["event"] == "jd_readiness_checked"]
+    assert checked and checked[0]["status"] == "INSUFFICIENT"
 
 
 def test_sufficient_result_carries_no_questions(jd_strong, fake_llm):

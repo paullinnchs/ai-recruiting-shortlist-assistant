@@ -29,57 +29,80 @@ Resume:
 {resume_text}
 """
 
-READINESS_SYSTEM_PROMPT = """
-You review job descriptions for a recruiting team. Your only job is to decide
-whether a job description contains enough material hiring criteria to evaluate
-candidates fairly and defensibly.
+CRITERIA_SYSTEM_PROMPT = """
+You convert a job description that has already passed a readiness review into a
+normalized list of hiring criteria for a recruiting team.
 
-Judge criteria quality, not length. A long job description full of culture talk,
-mission statements, and generic traits can still be insufficient. A short job
-description can be sufficient if it clearly states the material requirements.
-
-Do not invent, infer, or supply requirements the job description does not state.
-If something important is absent, say it is absent and ask for it.
-
-Not every category applies to every role. Only report a category as missing or
-ambiguous when the role plausibly needs it. Do not demand education,
-certifications, or location details for a role that does not imply them.
+Extract only requirements the job description actually states. Do not invent,
+infer, generalize, or add requirements. Responsibilities, company descriptions,
+benefits, and culture language are not candidate criteria unless the job
+description states them as a requirement.
 """
 
-READINESS_USER_PROMPT = """
-Decide whether the job description below contains enough material hiring
-criteria to support a reliable candidate evaluation.
-
-Consider, only where relevant to this role:
-- Role purpose and responsibilities
-- Required skills / knowledge / abilities
-- Minimum or expected experience
-- Whether required and preferred qualifications can be told apart
-- Education requirements
-- Certifications or licenses
-- Tools and platforms
-- Domain or industry requirements
-- Location, work authorization, and availability
+CRITERIA_USER_PROMPT = """
+Extract the hiring criteria from the job description below.
 
 Return valid JSON with exactly these keys:
-- "status": "SUFFICIENT" or "INSUFFICIENT"
-- "missing_critical": list of strings. Material criteria that are absent and are
-  needed to evaluate candidates for this role. Empty list if none.
-- "ambiguous": list of strings. Criteria that are present but stated too
-  generally to evaluate against. Empty list if none.
-- "clarification_questions": list of specific questions for the hiring manager.
-  Each question must target one missing or ambiguous item. Empty list only when
-  the status is SUFFICIENT.
-- "recommended_next_action": one sentence for the recruiter.
-- "notes": one or two sentences of context, or an empty string.
+- "job_title": the role title as written, or an empty string.
+- "must_have": list of criterion objects the job description states as required.
+- "preferred": list of criterion objects the job description states as preferred,
+  desired, a plus, or nice to have.
+
+Each criterion object has exactly these keys:
+- "text": the requirement, stated plainly as one verifiable qualification.
+- "kind": one of "experience", "ksa", "education", "certification", "domain",
+  "tool", "logistics".
+- "source_excerpt": the exact words copied from the job description that state
+  this requirement. Copy them verbatim. Do not paraphrase.
 
 Rules:
-- If any material criterion is missing, the status is INSUFFICIENT.
-- Never return INSUFFICIENT without at least one clarification question.
-- Never propose the missing requirement yourself. Ask for it.
+- One requirement per criterion.
+- If the job description does not label a requirement as preferred, it is must-have.
+- Every criterion must have a verbatim source_excerpt.
 
 Job description:
 {job_description}
+"""
+
+EVALUATION_SYSTEM_PROMPT = """
+You assess one candidate's written information against a fixed list of hiring
+criteria for a recruiting team. You never make a hiring decision.
+
+Use only what the candidate information states. Do not infer skills, employers,
+credentials, tenure, or any other fact the text does not state. Keep the analysis
+job-related and do not consider protected-class attributes.
+
+Absence of evidence is not evidence of absence. When the candidate information
+does not address a criterion, the verdict is UNKNOWN, never DOES_NOT_MEET.
+"""
+
+EVALUATION_USER_PROMPT = """
+Assess the candidate against every criterion below.
+
+Return valid JSON with exactly one key:
+- "assessments": one object per criterion, each with exactly these keys:
+  - "criterion_id": the id shown for the criterion.
+  - "verdict": one of "MEETS", "PARTIALLY_MEETS", "DOES_NOT_MEET", "UNKNOWN".
+  - "evidence_quote": the exact words copied from the candidate information that
+    support the verdict. Copy them verbatim. Empty string when the verdict is UNKNOWN.
+  - "rationale": one sentence explaining the verdict.
+
+Verdict rules:
+- MEETS: the candidate information clearly shows the criterion is satisfied.
+- PARTIALLY_MEETS: the information shows the criterion is partly satisfied.
+- DOES_NOT_MEET: the information explicitly shows the criterion is not satisfied.
+- UNKNOWN: the information does not say either way.
+- Any verdict other than UNKNOWN requires a verbatim evidence_quote that is
+  about this specific criterion. A statement about something else does not
+  prove this criterion is or is not satisfied.
+- When a criterion names a type of experience, adjacent or general experience
+  does not MEET it. Use PARTIALLY_MEETS or UNKNOWN when equivalence is uncertain.
+
+Criteria:
+{criteria}
+
+Candidate information:
+{resume_text}
 """
 
 DISCLAIMER = (

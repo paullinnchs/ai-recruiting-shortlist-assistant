@@ -8,31 +8,24 @@ The check judges criteria quality, not length. A long job description made of
 culture language and generic traits is insufficient. A short one that states its
 material requirements clearly is sufficient.
 
-Two paths produce the same :class:`ReadinessResult`:
-
-* the LLM path, used when an API key is configured, and
-* a deterministic path that inspects the text mechanically.
-
-The deterministic path also serves as the fallback when the LLM is unavailable or
-fails. It errs toward INSUFFICIENT, because asking a hiring manager one
-clarification question is cheaper than evaluating candidates against criteria
-that were never defined.
+The decision is deterministic: it never depends on an LLM response, so the same
+job description always gets the same answer. A job description is SUFFICIENT
+when it identifies the role and states at least one specific, verifiable
+must-have criterion. Education, certifications, tools, domain, logistics, and
+experience level are conditional: their absence never blocks on its own.
 """
 
 from __future__ import annotations
 
 import re
 
-import llm
 import run_log as run_log_module
-from prompts import READINESS_SYSTEM_PROMPT, READINESS_USER_PROMPT
 from schemas import EvaluationPath, ReadinessResult, ReadinessStatus
 
 # --- Thresholds. Deliberately low: the gate screens out job descriptions with
 # --- no usable criteria, it does not grade good ones.
-MIN_CRITERIA_ITEMS = 3
-MIN_CONCRETE_ITEMS = 3
-MIN_CONCRETE_RATIO = 0.4
+MIN_CONCRETE_MUST_HAVE = 1
+MIN_CRITERIA_ITEMS = 3  # used only to recognize a role from a title plus duties
 
 REQUIRED_MARKERS = (
     "requirement",
@@ -305,8 +298,8 @@ HOLD_ACTION = (
 def check_readiness(job_description: str, run_log=None, use_llm: bool | None = None) -> ReadinessResult:
     """Validate the hiring criteria before any candidate evaluation.
 
-    Uses the LLM when one is configured and falls back to the deterministic
-    check when it is not, or when the call fails.
+    Always deterministic, so the same job description always gets the same
+    decision. ``use_llm`` is accepted for caller compatibility and ignored.
     """
     log = run_log or run_log_module.null_log()
 
@@ -327,34 +320,8 @@ def check_readiness(job_description: str, run_log=None, use_llm: bool | None = N
         )
         return result
 
-    should_use_llm = llm.is_available() if use_llm is None else use_llm
-
-    if should_use_llm:
-        try:
-            result = _check_with_llm(job_description, log)
-        except Exception as exc:
-            result = check_readiness_deterministic(job_description)
-            result.notes = _join_notes(
-                f"LLM readiness check failed; used the deterministic check instead. Error: {exc}",
-                result.notes,
-            )
-            log.error("jd_readiness_llm_failed", exc)
-        else:
-            log.event(
-                "jd_readiness_checked",
-                status=result.status.value,
-                path=result.path.value,
-                missing_critical=len(result.missing_critical),
-                ambiguous=len(result.ambiguous),
-                questions=len(result.clarification_questions),
-            )
-            return result
-    else:
-        result = check_readiness_deterministic(job_description)
-        result.notes = _join_notes(
-            "No LLM was available; used the deterministic readiness check.",
-            result.notes,
-        )
+    result = check_readiness_deterministic(job_description)
+    result.notes = _join_notes("Checked by the deterministic readiness rules.", result.notes)
 
     log.event(
         "jd_readiness_checked",
@@ -367,88 +334,46 @@ def check_readiness(job_description: str, run_log=None, use_llm: bool | None = N
     return result
 
 
-def _check_with_llm(job_description: str, log) -> ReadinessResult:
-    data = llm.complete_json(
-        READINESS_SYSTEM_PROMPT,
-        READINESS_USER_PROMPT.format(job_description=job_description),
-        purpose="jd_readiness",
-        run_log=log,
-    )
-
-    status = _parse_status(data.get("status"))
-    missing = _as_list(data.get("missing_critical"))
-    ambiguous = _as_list(data.get("ambiguous"))
-    questions = _as_list(data.get("clarification_questions"))
-    notes = str(data.get("notes") or "").strip()
-
-    # Guardrail: a SUFFICIENT verdict that also reports missing material criteria
-    # contradicts itself. Resolve toward asking a human.
-    if status is ReadinessStatus.SUFFICIENT and missing:
-        status = ReadinessStatus.INSUFFICIENT
-        notes = _join_notes(
-            "Downgraded to INSUFFICIENT: the review reported missing critical criteria "
-            "alongside a SUFFICIENT verdict.",
-            notes,
-        )
-
-    # Guardrail: never stop the workflow without telling the recruiter what to ask.
-    if status is ReadinessStatus.INSUFFICIENT and not questions:
-        questions = _questions_from_findings(missing, ambiguous)
-        if not questions:
-            deterministic = check_readiness_deterministic(job_description)
-            questions = deterministic.clarification_questions
-            missing = missing or deterministic.missing_critical
-            ambiguous = ambiguous or deterministic.ambiguous
-            notes = _join_notes(
-                "Clarification questions were derived from the deterministic check "
-                "because the LLM returned none.",
-                notes,
-            )
-
-    if status is ReadinessStatus.SUFFICIENT:
-        questions = []
-
-    return ReadinessResult(
-        status=status,
-        missing_critical=missing,
-        ambiguous=ambiguous,
-        clarification_questions=questions,
-        recommended_next_action=(
-            str(data.get("recommended_next_action") or "").strip()
-            or (PROCEED_ACTION if status is ReadinessStatus.SUFFICIENT else HOLD_ACTION)
-        ),
-        path=EvaluationPath.LLM,
-        notes=notes,
-    )
-
-
 def check_readiness_deterministic(job_description: str) -> ReadinessResult:
-    """Mechanical readiness check. No LLM, no network, fully repeatable."""
+    """Mechanical readiness check. No LLM, no network, fully repeatable.
+
+    SUFFICIENT requires an identifiable role and at least one specific,
+    verifiable must-have criterion. Every other category is conditional: it
+    blocks only when the job description says it is required without saying
+    what it is.
+    """
+    # Imported here: criteria_extraction imports helpers from this module.
+    from criteria_extraction import extract_criteria_deterministic
+
     text = job_description or ""
     lowered = text.lower()
     items = _criteria_items(text)
     concrete = [item for item in items if _is_concrete(item)]
     vague = [item for item in items if not _is_concrete(item)]
+    concrete_must_have = [
+        criterion
+        for criterion in extract_criteria_deterministic(text).must_have
+        if _is_concrete(criterion.text)
+    ]
 
     missing: list[str] = []
     ambiguous: list[str] = []
     questions: list[str] = []
     notes: list[str] = []
 
-    # --- Critical: role purpose -------------------------------------------------
-    if not _has_role_purpose(text, lowered, items):
+    # --- Critical: identifiable role --------------------------------------------
+    # A title counts as identifying the role once it comes with specific criteria.
+    if not (_has_role_purpose(text, lowered, items) or (_has_title(text) and concrete_must_have)):
         missing.append(CRITICAL_LABELS["role_purpose"])
         questions.append(CRITICAL_QUESTIONS["role_purpose"])
 
-    # --- Critical: something specific to evaluate against ----------------------
-    concrete_ratio = len(concrete) / len(items) if items else 0.0
-    enough_items = len(items) >= MIN_CRITERIA_ITEMS
-    enough_concrete = len(concrete) >= MIN_CONCRETE_ITEMS and concrete_ratio >= MIN_CONCRETE_RATIO
+    # --- Critical: at least one specific must-have criterion --------------------
+    enough_concrete = len(concrete_must_have) >= MIN_CONCRETE_MUST_HAVE
 
-    if not enough_items or not enough_concrete:
+    if not enough_concrete:
         missing.append(CRITICAL_LABELS["required_criteria"])
         questions.append(CRITICAL_QUESTIONS["required_criteria"])
-        if items and not enough_concrete:
+        if items:
             ambiguous.append(
                 f"{len(vague)} of {len(items)} stated requirements describe general "
                 "traits rather than verifiable qualifications."
@@ -471,9 +396,9 @@ def check_readiness_deterministic(job_description: str) -> ReadinessResult:
             "Requirements lean on generic candidate language: " + "; ".join(boilerplate[:6]) + "."
         )
 
-    # --- Critical: experience expectation --------------------------------------
+    # --- Conditional: experience expectation (flagged, never blocking) ---------
     if not _has_experience_expectation(text, lowered):
-        missing.append(CRITICAL_LABELS["experience"])
+        ambiguous.append(CRITICAL_LABELS["experience"])
         questions.append(CRITICAL_QUESTIONS["experience"])
 
     # --- Required vs preferred --------------------------------------------------
@@ -497,7 +422,11 @@ def check_readiness_deterministic(job_description: str) -> ReadinessResult:
             continue
         if _category_is_anchored(text, lowered, config):
             continue
-        ambiguous.append(config["label"])
+        # Blocking only when the JD itself says the unnamed category is required.
+        if _category_marked_required(text, config):
+            missing.append(config["label"])
+        else:
+            ambiguous.append(config["label"])
         questions.append(config["question"])
 
     # --- Non-blocking observations ---------------------------------------------
@@ -648,6 +577,22 @@ def _has_role_purpose(text: str, lowered: str, items: list[str]) -> bool:
     return has_title and len(items) >= MIN_CRITERIA_ITEMS and verb_hits >= 1
 
 
+def _has_title(text: str) -> bool:
+    first_line = next((line.strip() for line in text.splitlines() if line.strip()), "")
+    return 1 <= len(first_line.split()) <= 12 and not _looks_like_bullet(first_line)
+
+
+def _category_marked_required(text: str, config: dict) -> bool:
+    """True when a line that mentions the category also says it is required."""
+    for line in text.splitlines():
+        line_lower = line.lower()
+        if any(trigger in line_lower for trigger in config["triggers"]) and re.search(
+            r"\b(?:required|must|mandatory)\b", line_lower
+        ):
+            return True
+    return False
+
+
 def _has_experience_expectation(text: str, lowered: str) -> bool:
     if re.search(r"\d+\s*\+?\s*(?:years?|yrs?)", lowered):
         return True
@@ -675,27 +620,6 @@ def _category_is_anchored(text: str, lowered: str, config: dict) -> bool:
 
 
 # --- Small utilities ---------------------------------------------------------
-
-
-def _parse_status(value) -> ReadinessStatus:
-    text = str(value or "").strip().upper()
-    if text in {"SUFFICIENT", "READY", "PASS"}:
-        return ReadinessStatus.SUFFICIENT
-    return ReadinessStatus.INSUFFICIENT
-
-
-def _as_list(value) -> list[str]:
-    if isinstance(value, list):
-        return [str(item).strip() for item in value if str(item).strip()]
-    if isinstance(value, str) and value.strip():
-        return [value.strip()]
-    return []
-
-
-def _questions_from_findings(missing: list[str], ambiguous: list[str]) -> list[str]:
-    questions = [f"Please clarify: {item}" for item in missing]
-    questions.extend(f"Please make this specific enough to evaluate: {item}" for item in ambiguous)
-    return questions
 
 
 def _dedupe(values: list[str]) -> list[str]:
